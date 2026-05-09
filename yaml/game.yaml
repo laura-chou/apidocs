@@ -1,0 +1,474 @@
+openapi: 3.0.3
+info:
+  title: Game API
+  description: API documentation for various gaming modules including RescueMoney, Jackpot, TurnChess, and HitMonsters.
+  version: 1.0.0
+
+tags:
+  - name: RescueMoney
+    description: Operations related to the rescue money game
+  - name: Jackpot
+    description: Jackpot management and operations
+  - name: TurnChess
+    description: Operations related to the turn chess game
+  - name: HitMonsters
+    description: Operations related to the hit monsters game
+
+paths:
+  # --- RescueMoney ---
+  /rescue-money:
+    get:
+      tags: [RescueMoney]
+      summary: Get All Players
+      operationId: getAllRescueMoneyPlayers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RescueMoneyResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ""
+                    data:
+                      - rank: 1
+                        money: "900"
+                        players: ["player1"]
+                      - rank: 2
+                        money: "800"
+                        players: ["player2", "player3"]
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /rescue-money/top5:
+    get:
+      tags: [RescueMoney]
+      summary: Get Top Five Players
+      operationId: getTop5RescueMoney
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RescueMoneyResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: "success"
+                    data:
+                      - { rank: 1, money: "900", players: ["player1"] }
+                      - { rank: 2, money: "800", players: ["player2"] }
+                      - { rank: 3, money: "700", players: ["player2"] }
+                      - { rank: 4, money: "600", players: ["player2"] }
+                      - { rank: 5, money: "500", players: ["player2"] }
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /rescue-money/create:
+    post:
+      tags: [RescueMoney]
+      summary: Create Player
+      operationId: createRescueMoneyPlayer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RescueMoneyCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePlayerResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --- Jackpot ---
+  /jackpot:
+    get:
+      tags: [Jackpot]
+      summary: Get Jackpot
+      operationId: getJackpot
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "888888"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /jackpot/update:
+    patch:
+      tags: [Jackpot]
+      summary: Update Jackpot
+      operationId: updateJackpot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJackpotRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "7999992"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --- TurnChess ---
+  /turn-chess:
+    get:
+      tags: [TurnChess]
+      summary: Get All Players
+      operationId: getAllTurnChessPlayers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TurnChessResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ""
+                    data:
+                      - rank: 1
+                        spentTime: "10:00"
+                        players: [{ character: 1, player: "player1", score: 16 }]
+                      - rank: 2
+                        spentTime: "20:00"
+                        players: [
+                          { character: 2, player: "player2", score: 16 },
+                          { character: 3, player: "player3", score: 12 },
+                          { character: 2, player: "player4", score: 10 }
+                        ]
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /turn-chess/top5:
+    get:
+      tags: [TurnChess]
+      summary: Get Top Five Players
+      operationId: getTop5TurnChess
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TurnChessResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ""
+                    data:
+                      - rank: 1
+                        spentTime: "10:00"
+                        players: [{ character: 1, player: "player1", score: 16 }]
+                      - rank: 2
+                        spentTime: "12:00"
+                        players: [
+                          { character: 2, player: "player2", score: 16 }
+                        ]
+                      - rank: 3
+                        spentTime: "15:30"
+                        players: [
+                          { character: 3, player: "player23", score: 12 }
+                        ]
+                      - rank: 4
+                        spentTime: "20:05"
+                        players: [
+                          { character: 2, player: "player4", score: 10 }
+                        ]
+                      - rank: 5
+                        spentTime: "22:30"
+                        players: [
+                          { character: 4, player: "player5", score: 10 }
+                        ]
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /turn-chess/create:
+    post:
+      tags: [TurnChess]
+      summary: Create Player
+      operationId: createTurnChessPlayer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurnChessCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePlayerResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --- HitMonsters ---
+  /hit-monsters:
+    get:
+      tags: [HitMonsters]
+      summary: Get All Players
+      operationId: getAllHitMonsters
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HitMonstersResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ""
+                    data:
+                      - rank: 1
+                        spentTime: "05:00"
+                        players: ["player1"]
+                      - rank: 2
+                        spentTime: "10:10"
+                        players: ["player2", "player3"]
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /hit-monsters/top5:
+    get:
+      tags: [HitMonsters]
+      summary: Get Top Five Players
+      operationId: getTop5HitMonsters
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HitMonstersResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ""
+                    data:
+                      - rank: 1
+                        spentTime: "05:00"
+                        players: ["player1"]
+                      - rank: 2
+                        spentTime: "10:10"
+                        players: ["player2", "player3"]
+                      - rank: 3
+                        spentTime: "14:30"
+                        players: ["player4"]
+                      - rank: 4
+                        spentTime: "15:01"
+                        players: ["player5"]
+                      - rank: 5
+                        spentTime: "20:15"
+                        players: ["player6"]
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /hit-monsters/create:
+    post:
+      tags: [HitMonsters]
+      summary: Create Player
+      operationId: createHitMonsterPlayer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HitMonstersCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePlayerResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status: { type: integer, example: 500 }
+        message: { type: string, example: "Internal server error." }
+    
+    RescueMoneyItem:
+      type: object
+      required: [rank, money, players]
+      properties:
+        rank: { type: integer, example: 1 }
+        money: { type: string, example: "900" }
+        players: { type: array, items: { type: string }, example: ["player1"] }
+    
+    RescueMoneyResponse:
+      type: object
+      required: [status, message, data]
+      properties:
+        status: { type: integer, example: 200 }
+        message: { type: string, example: "" }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RescueMoneyItem'
+
+    RescueMoneyCreateRequest:
+      type: object
+      required: [player, money]
+      properties:
+        player: { type: string, example: "player1" }
+        money: { type: string, example: "10000" }
+
+    TurnChessPlayer:
+      type: object
+      required: [character, player, score]
+      properties:
+        character: { type: integer, example: 1 }
+        player: { type: string, example: "player1" }
+        score: { type: integer, example: 16 }
+
+    TurnChessItem:
+      type: object
+      required: [rank, spentTime, players]
+      properties:
+        rank: { type: integer, example: 1 }
+        spentTime: { type: string, example: "10:00" }
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/TurnChessPlayer'
+
+    TurnChessResponse:
+      type: object
+      required: [status, message, data]
+      properties:
+        status: { type: integer, example: 200 }
+        message: { type: string, example: "" }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TurnChessItem'
+
+    TurnChessCreateRequest:
+      type: object
+      required: [character, player, score, spentTime]
+      properties:
+        character: { type: integer, example: 1 }
+        player: { type: string, example: "player1" }
+        score: { type: integer, example: 12 }
+        spentTime: { type: string, example: "12:00" }
+
+    HitMonstersItem:
+      type: object
+      required: [rank, spentTime, players]
+      properties:
+        rank: { type: integer, example: 1 }
+        spentTime: { type: string, example: "05:00" }
+        players: { type: array, items: { type: string }, example: ["player1"] }
+
+    HitMonstersResponse:
+      type: object
+      required: [status, message, data]
+      properties:
+        status: { type: integer, example: 200 }
+        message: { type: string, example: "" }
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HitMonstersItem'
+
+    HitMonstersCreateRequest:
+      type: object
+      required: [player, spentTime]
+      properties:
+        player: { type: string, example: "20250222" }
+        spentTime: { type: string, example: "16:00" }
+
+    CreatePlayerResponse:
+      type: object
+      required: [status, message, data]
+      properties:
+        status: { type: integer, example: 200 }
+        message: { type: string, example: " " }
+        data:
+          type: object
+          required: [isTopFive]
+          properties:
+            isTopFive: { type: boolean, example: false }
+
+    UpdateJackpotRequest:
+      type: object
+      required: [win]
+      properties:
+        win: { type: boolean, example: false }

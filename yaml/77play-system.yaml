@@ -1,0 +1,765 @@
+openapi: 3.0.3
+info:
+  title: 77PlaySystem API
+  version: 1.0.0
+  description: This is about 77play system api description document.
+
+tags:
+  - name: User
+    description: User authentication related APIs
+  - name: Customer
+    description: Customer management APIs
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    CustIdParam:
+      name: custId
+      in: path
+      required: true
+      schema:
+        type: string
+        example: a1b2c3def
+      description:  customer unique identifier
+  schemas:
+    HistoryItem:
+      type: object
+      required:
+        - serviceName
+        - amount
+        - currentBalance
+        - spendDate
+        - expiryDate
+      properties:
+        serviceName:
+          type: string
+          description: service type name
+        amount:
+          type: number
+          description: customer transaction amount
+        currentBalance:
+          type: number
+          description: customer balance
+        spendDate:
+          type: string
+          description: customer spend date
+        expiryDate:
+          type: string
+          description: customer expiry date
+    LoginRequest:
+      type: object
+      required:
+        - account
+        - password
+      properties:
+        account:
+          type: string
+          description: user account
+        password:
+          type: string
+          description: user password
+    LoginResponse:
+      type: object
+      required:
+        - status
+        - message
+        - data
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+          required:
+            - token
+          properties:
+            token:
+              type: string
+    Customer:
+      type: object
+      required:
+        - custId
+        - custName
+        - expiryDate
+      properties:
+        custId:
+          type: string
+          description: customer unique identifier
+        custName:
+          type: string
+          description: customer name
+        expiryDate:
+          type: string
+          description: customer expiry date
+    CustomerDetail:
+      type: object
+      required:
+        - custId
+        - custName
+        - extendedTimes
+        - createDate
+        - history
+      properties:
+        custId:
+          type: string
+          description: customer unique identifier
+        custName:
+          type: string
+          description: customer name
+        extendedTimes:
+          type: number
+          description: customer extension times
+        createDate:
+          type: string
+          description: customer create date
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryItem'
+    ServerErrorResponse:
+      title: ErrorResponse
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+    ErrorResponse:
+      title: ErrorResponse
+      type: object
+      required:
+        - status
+        - message
+        - errorType
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        errorType:
+          type: string
+          description: |
+            | errorType      | message                               |
+            |----------------|---------------------------------------|
+            | CONTENT_TYPE   | Invalid content type.                 |
+            | JSON_KEY       | Invalid JSON key.                     |
+            | JSON_FORMAT    | Invalid JSON format.                  |
+            | WRONG_PASSWORD | Wrong password.                       |
+            | INVALID_TOKEN  | Invalid authentication token.         |
+            | CUST_ID        | Invalid Customer ID format.           |
+            | CUST_NOT_DUE   | Customer is not due yet.              |
+    SuccessResponse:
+      title: SuccessResponse
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /user/login:
+    post:
+      tags:
+        - User
+      security: []
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              Request:
+                value:
+                  account: user account
+                  password: user password
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      token: <JWT_TOKEN>
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid content type.
+                    errorType: JSON_KEY
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Wrong password.
+                    errorType: WRONG_PASSWORD
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /user/logout:
+    post:
+      tags:
+        - User
+      summary: Logout
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - message
+                properties:
+                  status:
+                    type: integer
+                    x-stoplight:
+                      id: 0o7ik2iifl4ml
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: 8sw5kb9axgclz
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /customer:
+    get:
+      tags:
+        - Customer
+      summary: List Customers
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - message
+                  - data
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      - custId: a1b2c3def
+                        custName: customer1
+                        expiryDate: 2025/10/01
+                      - custId: g4h5i6jkf
+                        custName: customer2
+                        expiryDate: 2025/07/28
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  '/customer/{custId}':
+    get:
+      tags:
+        - Customer
+      summary: Get Customer Detail
+      parameters:
+        - $ref: '#/components/parameters/CustIdParam'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                examples:
+                  Response:
+                    value:
+                      status: 200
+                      message: ''
+                      data:
+                        custId: a1b2c3def
+                        custName: customer1
+                        extendedTimes: 0
+                        createDate: 2025/07/01
+                        history:
+                          - serviceName: board game
+                            amount: -200
+                            currentBalance: 1300
+                            spendDate: 2025/07/10
+                            expiryDate: 2025/10/01
+                          - serviceName: board game
+                            amount: 1500
+                            currentBalance: 1500
+                            spendDate: 2025/07/01
+                            expiryDate: 2025/10/01
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/CustomerDetail'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      custId: a1b2c3def
+                      custName: customer1
+                      extendedTimes: 0
+                      createDate: 2025/07/01
+                      history:
+                        - serviceName: board game
+                          amount: -200
+                          currentBalance: 1300
+                          spendDate: 2025/07/10
+                          expiryDate: 2025/10/01
+                        - serviceName: board game
+                          amount: 1500
+                          currentBalance: 1500
+                          spendDate: 2025/07/01
+                          expiryDate: 2025/10/01
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid Customer ID format.
+                    errorType: CUST_ID
+        '401':
+          description: invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 404
+                    message: No data found.
+        '500':
+          description: server error
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+    delete:
+      tags:
+        - Customer
+      summary: Delete Customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CustIdParam'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid customer ID
+                    errorType: CUST_ID
+
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 404
+                    message: No data found.
+
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /customer/create:
+    post:
+      tags:
+        - Customer
+      summary: Create Customer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - custName
+                - amount
+              properties:
+                custName:
+                  type: string
+                  description: customer name in line
+                amount:
+                  type: number
+                  description: customer transaction amount
+                createDate:
+                  type: string
+                  description: customer create date
+            examples:
+              Request:
+                value:
+                  custName: customer3
+                  amount: 1500
+              Request with createDate:
+                value:
+                  custName: customer3
+                  amount: 1500
+                  createDate: '2025/08/16 11:22'
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - message
+                properties:
+                  status:
+                    type: integer
+                    x-stoplight:
+                      id: c23pxb7qe3r9p
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: drmkc4sgwejnh
+              examples:
+                Response:
+                  value:
+                    status: 201
+                    message: ''
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid content type.
+                    errorType: JSON_KEY
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 409
+                    message: This record already exists.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /customer/update:
+    patch:
+      tags:
+        - Customer
+      summary: Update Customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+                - custId
+                - custName
+                - amount
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - name
+                    - extend
+                    - charge
+                    - refill
+                  description: ' type of action to perform. Options: `name`, `extend`, `charge`, `refill`.'
+                custId:
+                  type: string
+                  description: customer unique identifier.
+                custName:
+                  type: string
+                  description: name of the customer to update.
+                amount:
+                  type: number
+                  description: customer transaction amount.
+                createDate:
+                  type: string
+                  description: customer create date.
+            examples:
+              update customer name:
+                value:
+                  action: name
+                  custId: a1b2c3def
+                  custName: updateName
+                  amount: 0
+              extend expiry date:
+                value:
+                  action: extend
+                  custId: a1b2c3def
+                  custName: custName
+                  amount: 0
+              customer transaction:
+                value:
+                  action: charge
+                  custId: a1b2c3def
+                  custName: custName
+                  amount: 150
+              customer top up:
+                value:
+                  action: refill
+                  custId: a1b2c3def
+                  custName: custName
+                  amount: 1500
+              request with createDate:
+                value:
+                  action: name
+                  custId: a1b2c3def
+                  custName: updateName
+                  amount: 1500
+                  createDate: '2025/08/16 11:22'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid content type.
+                    errorType: JSON_KEY
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 404
+                    message: No data found.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.

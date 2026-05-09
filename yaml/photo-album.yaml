@@ -1,0 +1,748 @@
+openapi: 3.0.3
+info:
+  title: PhotoAlbum API
+  version: 1.0.0
+  description: This is about photo album system api description document.
+
+tags:
+  - name: User
+    description: User-related operations
+  - name: Album
+    description: Album folder operations
+  - name: File
+    description: File operations
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    Folder:
+      type: object
+      required:
+        - _id
+        - name
+        - files
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the folder
+        name:
+          type: string
+          description: Name of the folder
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+    File:
+      type: object
+      required:
+        - _id
+        - customName
+        - storeName
+      properties:
+        _id:
+          type: string
+          description: Unique identifier for the file
+        customName:
+          type: string
+          description: Custom filename given by the user
+        storeName:
+          type: string
+          description: Actual stored filename
+    FolderRequest:
+      type: object
+      title: FolderRequest
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum:
+            - create
+            - rename
+            - delete
+          description: The action to perform
+        folderName:
+          type: string
+          description: The name of the folder to be updated
+    FileRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum:
+            - rename
+            - delete
+          description: The action to perform
+        fileName:
+          type: string
+          description: The name of the file to be updated
+    CaptchaResponse:
+      type: object
+      required:
+        - status
+        - message
+        - data
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+          required:
+            - captchaId
+            - svg
+          properties:
+            captchaId:
+              type: string
+              description: unique identifier for the captcha
+            svg:
+              type: string
+              description: captcha image in svg format
+    ServerErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+        - errorType
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        errorType:
+          type: string
+          description: |
+            | errorType       | message                                            |
+            |-----------------|----------------------------------------------------|
+            | CONTENT_TYPE    | Invalid content type.                              |
+            | JSON_KEY        | Invalid JSON key.                                  |
+            | JSON_FORMAT     | Invalid JSON format.                               |
+            | INVALID_ID      | Invalid ID format.                                 |
+            | INVALID_CAPTCHA | Captcha is incorrect.                              |
+            | EXPIRED_CAPTCHA | Captcha has expired.                               |
+            | TOKEN_INVALID   | Invalid authentication token.                      |
+            | FILE_LIMIT      | reached the maximum number of files (5)            |
+            | FOLDER_LIMIT    | Reached the maximum number of folders (5).         |
+            | NO_FILE         | No file upload.                                    |
+            | LIMIT_FORMAT    | Invalid file format. Only image files are allowed. |
+    FolderResponse:
+      title: FolderResponse
+      type: object
+      required:
+        - status
+        - message
+        - data
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Folder'
+security:
+  - cookieAuth: []
+paths:
+  /user/captcha:
+    get:
+      tags:
+        - User
+      security: []
+      summary: Get Captcha
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptchaResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      captchaId: 6748677c
+                      svg: '[SVG content omitted for preview]'
+        '429':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 429
+                    message: Too many requests. Please wait a moment.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /user/create:
+    post:
+      tags:
+        - User
+      security: []
+      summary: User Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - account
+                - password
+                - captchaId
+                - captchaText
+              properties:
+                account:
+                  type: string
+                  description: The user's account identifier
+                password:
+                  type: string
+                  description: The user's password
+                captchaId:
+                  type: string
+                  description: The unique identifier for the captcha identifier
+                captchaText:
+                  type: string
+                  description: The text input provided by the user to solve the captcha
+            examples:
+              Request:
+                value:
+                  account: user account
+                  password: user password
+                  captchaId: 6748677c
+                  captchaText: abcd
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptchaResponse'
+              examples:
+                Response:
+                  value:
+                    status: 201
+                    message: ''
+                    data:
+                      captchaId: 6748677c
+                      svg: '[SVG content omitted for preview]'
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptchaResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Captcha has expired.
+                    data:
+                      captchaId: 6748677c
+                      svg: '[SVG content omitted for preview]'
+        '409':
+          description: conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 409
+                    message: This record already exists.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /user/login:
+    post:
+      tags:
+        - User
+      security: []
+      summary: User Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - account
+                - password
+              properties:
+                account:
+                  type: string
+                  description: The user's account identifier
+                password:
+                  type: string
+                  description: The user's password
+            examples:
+              Request:
+                value:
+                  account: user account
+                  password: user password
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      - _id: 6901e
+                        name: folderName
+                        files:
+                          - _id: 6905b
+                            customName: customA.jpg
+                            storeName: storeA.jpg
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Wrong password.
+                    errorType: WRONG_PASSWORD
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /user/logout:
+    post:
+      tags:
+        - User
+      summary: User Logout
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    x-stoplight:
+                      id: h45w574e541y4
+                  message:
+                    type: string
+                    x-stoplight:
+                      id: yzapck4qj81m1
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: INVALID_TOKEN
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  '/album/{folderId}':
+    patch:
+      tags:
+        - Album
+      summary: Update Album Folder
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 6901e
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FolderRequest'
+            examples:
+              Create Request:
+                value:
+                  action: create
+                  folderName: createFolder
+              Rename Request:
+                value:
+                  action: rename
+                  folderName: updateFolder
+              Delete Request:
+                value:
+                  action: delete
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      - _id: 6901e
+                        name: folderName
+                        files:
+                          - _id: 6905b
+                            customName: customA.jpg
+                            storeName: storeA.jpg
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid content type.
+                    errorType: JSON_KEY
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: TOKEN_INVALID
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 404
+                    message: No data found.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  '/file/{folderId}/{fileName}':
+    get:
+      tags:
+        - File
+      summary: Read Photo
+      parameters:
+        - name: folderId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 6901e
+        - name: fileName
+          in: path
+          required: true
+          schema:
+            type: string
+            example: image.jpg
+      responses:
+        '200':
+          description: ok
+          content:
+            image/png | jpeg | jpg:
+              schema:
+                type: string
+                format: binary
+              examples:
+                Response:
+                  value: <binary data>
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: TOKEN_INVALID
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  /file/upload:
+    post:
+      tags:
+        - File
+      summary: Upload Photo
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                folderId:
+                  type: string
+                  description: The album folder identifier
+                  example: 6901e
+                files:
+                  type: array
+                  description: Upload multiple files
+                  items:
+                    type: string
+                    format: binary
+                  example:
+                    - image.jpg
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid content type.
+                    errorType: JSON_KEY
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: TOKEN_INVALID
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 404
+                    message: No data found.
+        '413':
+          description: content too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 413
+                    message: File size exceeds the limit. Please upload a file smaller than 1MB.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
+  '/file/{fileId}':
+    post:
+      tags:
+        - File
+      summary: Update File
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: 6905b
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileRequest'
+            examples:
+              Rename Request:
+                value:
+                  action: rename
+                  fileName: updateFile
+              Delete Request:
+                value:
+                  action: delete
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolderResponse'
+              examples:
+                Response:
+                  value:
+                    status: 200
+                    message: ''
+                    data:
+                      - _id: 6901e
+                        name: folderName
+                        files:
+                          - _id: 6905b
+                            customName: updateFile
+                            storeName: storeA.jpg
+        '400':
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 400
+                    message: Invalid content type.
+                    errorType: JSON_KEY
+        '401':
+          description: unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 401
+                    message: Invalid authentication token.
+                    errorType: TOKEN_INVALID
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 404
+                    message: No data found.
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+              examples:
+                Response:
+                  value:
+                    status: 500
+                    message: Internal server error.
