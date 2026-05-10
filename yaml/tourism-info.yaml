@@ -2,10 +2,12 @@ openapi: 3.0.3
 info:
   title: TourismInfo API
   version: 1.0.0
-  description: "This is tourism info api description file, use [Open Data](https://data.gov.tw/) provide data.  \n
-  [restaurant](https://data.gov.tw/dataset/7779)  \n
-  [scenic spot](https://data.gov.tw/dataset/7777)  \n
-  [hotel](https://data.gov.tw/dataset/7780)"
+  description: |
+    This is tourism info api description file, use
+    <a href="https://data.gov.tw/" target="_blank">Open Data</a> provide data.<br>
+    <a href="https://data.gov.tw/dataset/7779" target="_blank">restaurant</a><br>
+    <a href="https://data.gov.tw/dataset/7777" target="_blank">scenic spot</a><br>
+    <a href="https://data.gov.tw/dataset/7780" target="_blank">hotel</a>
 
 tags:
   - name: Food
